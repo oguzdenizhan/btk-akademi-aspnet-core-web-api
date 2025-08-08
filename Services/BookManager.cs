@@ -1,27 +1,22 @@
 ﻿using Entities.Models;
 using Services.Contracts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Repositories.Contracts;
+using Entities.Exceptions;
 namespace Services
 {
     public class BookManager : IBookService
     {
         private readonly IRepositoryManager _manager;
+        private readonly ILoggerService _logger;
 
-        public BookManager(IRepositoryManager manager)
+        public BookManager(IRepositoryManager manager, ILoggerService logger)
         {
             _manager = manager;
+            _logger = logger;
         }
 
         public Book CreateOneBook(Book book)
         {
-            if(book is null)
-                throw new ArgumentNullException(nameof(book));
-
             _manager.Book.CreateOneBook(book);
             _manager.Save();
             return book;
@@ -33,8 +28,9 @@ namespace Services
             var entity = _manager.Book.GetOneBookById(id, trackChanges);
 
             if (entity is null)
-                throw new Exception($"Book with id: {id} could not found!");
-
+            {
+                throw new BookNotFoundException(id);
+            }
             _manager.Book.DeleteOneBook(entity);
             _manager.Save();
 
@@ -48,7 +44,11 @@ namespace Services
 
         public Book GetOneBook(int id, bool trackChanges)
         {
-            return _manager.Book.GetOneBookById(id,trackChanges);
+            var book = _manager.Book.GetOneBookById(id,trackChanges);
+
+            if (book is null)
+              throw new BookNotFoundException(id);
+            return book;
         }
 
         public void UpdateOneBook(int id, Book book, bool trackChanges)
@@ -57,8 +57,7 @@ namespace Services
             var entity = _manager.Book.GetOneBookById(id, trackChanges);
 
             if (entity is null)
-                throw new Exception($"Book with id: {id} could not found!");
-
+                throw new BookNotFoundException(id);
             //check params 
             if (book is null)
                 throw new ArgumentNullException(nameof(book));

@@ -1,13 +1,8 @@
-﻿using Entities.Models;
+﻿using Entities.Exceptions;
+using Entities.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Services.Contracts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Presentation.Controllers
 {
     [ApiController]
@@ -25,83 +20,46 @@ namespace Presentation.Controllers
 
         public IActionResult GetAllBooks()
         {
-            try
-            {
-                var books = _manager.bookService.GetAllBooks(false);
-                return Ok(books);
-            }
-            catch (Exception ex)
-            {
-
-                throw new Exception(ex.Message);
-            }
+            var books = _manager.bookService.GetAllBooks(false);
+            return Ok(books);
 
         }
         [HttpGet("{id:int}")]
         public IActionResult GetOneBook([FromRoute(Name = "id")] int id)
 
         {
-            try
-            {
-                //LINQ
-                var book = _manager
-                    .bookService.GetOneBook(id, false);
+            //LINQ
+            var book = _manager
+                .bookService.GetOneBook(id, false);
 
-                if (book is null)
-                {
-                    return NotFound();
-                }
-                return Ok(book);
 
-            }
-            catch (Exception ex)
-            {
-
-                throw new Exception(ex.Message);
-            }
+            return Ok(book);
 
         }
 
         [HttpPost]
         public IActionResult CreateOneBook([FromBody] Book book)
         {
-            try
+            if (book is null)
             {
-                if (book is null)
-                {
-                    return BadRequest();//400
-                }
-                _manager.bookService.CreateOneBook(book);
-
-                return StatusCode(201, book);
-
+                return BadRequest();//400
             }
-            catch (Exception ex)
-            {
+            _manager.bookService.CreateOneBook(book);
 
-                return BadRequest(ex.Message);
-            }
+            return StatusCode(201, book);
 
         }
 
         [HttpPut("{id:int}")]
         public IActionResult UpdateBook([FromRoute(Name = "id")] int id, [FromBody] Book book)
         {
-            try
+            if (book is null)
             {
-                if (book is null)
-                {
-                    return BadRequest();//400
-                }
-                //check book
-                _manager.bookService.UpdateOneBook(id, book, true);
-                return NoContent(); //204
+                return BadRequest();//400
             }
-            catch (Exception ex)
-            {
-
-                throw new Exception(ex.Message);
-            }
+            //check book
+            _manager.bookService.UpdateOneBook(id, book, true);
+            return NoContent(); //204
         }
 
 
@@ -120,16 +78,9 @@ namespace Presentation.Controllers
                 .bookService
                 .GetOneBook(id, true);
 
-            if (entity is null)
-            {
-                return NotFound(); //404
-            }
             bookPatch.ApplyTo(entity);
             _manager.bookService.UpdateOneBook(id, entity, true);
             return NoContent();//204
-
-
-
         }
 
     }
